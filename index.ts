@@ -1,7 +1,11 @@
 import { Pixel, Colors } from "./pixel";
 import { pixelTrueColor } from "./util";
 import { Board } from "./board";
-import { get } from "http";
+
+interface Branch {
+  score: number;
+  moves: PixelData[];
+}
 
 let board = new Board();
 
@@ -24,18 +28,24 @@ board.mosaics.forEach((m) => {
 console.log();
 console.log("Total:", board.getScore());
 
+interface PixelData {
+  color: number;
+  x: number;
+  y: number;
+}
+
 const getHighestScore = (
   board: Board,
-  moveHistory: Pixel[],
-  depth: number
-): { board: Board; moveHistory: Pixel[] } => {
-  if (depth > 2) {
-    // console.log(board.getScore());
-    return { board, moveHistory };
+  depth: number,
+  history: PixelData[]
+): Branch => {
+  if (depth == 0) {
+    // board.printBoard();
+    // console.log("Total:", board.getScore());
+    return { score: board.getScore(), moves: history };
   }
-  // recursive move generation, minimax
   const moves = board.getMoves();
-  const scores: { board: Board; moveHistory: Pixel[] }[] = [];
+  let maxScore: Branch = { score: -Infinity, moves: [] };
   moves.forEach((move) => {
     for (const color of [
       Colors.White,
@@ -45,27 +55,29 @@ const getHighestScore = (
     ]) {
       const copy = board.copy();
       copy.pixels[move.y][move.x].color = color;
-      // const score = copy.getScore();
-      // console.log(move.y, move.x, color, score);
-      const historyCopy: Pixel[] = moveHistory.map((m) => m);
-      historyCopy.push(new Pixel(move.y, move.x, copy, color));
-      const b = getHighestScore(copy, historyCopy, depth + 1);
-      scores.push(b);
+      const historyCopy = [];
+      history.forEach((h) =>
+        historyCopy.push({ color: h.color, x: h.x, y: h.y })
+      );
+      historyCopy.push({ color, x: move.x, y: move.y });
+      const b = getHighestScore(copy, depth - 1, historyCopy);
+      if (b.score > maxScore.score) {
+        maxScore = b;
+      }
       // console.log(b);
     }
   });
-  return scores.sort((a, b) => {
-    return b.board.getScore() - a.board.getScore();
-  })[0];
+  return maxScore;
 };
 
 const start = Date.now();
-const top = getHighestScore(board, [], 0);
-console.log(
-  "Top",
-  top.board.getScore(),
-  top.moveHistory.map((m) => `${m.y},${m.x} ${Colors[m.color]}`).join(" | ")
-);
+const top = getHighestScore(board, 3, []);
+console.log("Top", top.score);
+const newBoard = board.copy();
+top.moves.forEach((m) => {
+  console.log(`${m.y},${m.x} ${m.color}`);
+  newBoard.pixels[m.y][m.x].color = m.color;
+});
+newBoard.printBoard();
 const end = Date.now();
 console.log("Time:", end - start);
-top.board.printBoard();
