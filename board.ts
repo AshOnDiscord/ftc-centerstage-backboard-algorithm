@@ -53,32 +53,33 @@ export class Board {
 
   public getMosiacs() {
     this.mosaics = [];
-    const checked: Pixel[] = [];
+    const visited: boolean[][] = this.pixels.map((row) => row.map(() => false));
     for (let i = 0; i < this.pixels.length; i++) {
       for (let j = 0; j < this.pixels[i].length; j++) {
         const pixel = this.pixels[i][j];
-        if (checked.includes(pixel)) continue;
-        checked.push(pixel);
         if (pixel.color === Colors.Empty || pixel.color === Colors.White) {
           continue;
         }
+        if (visited[i][j]) continue;
+        visited[i][j] = true;
         const neighbors = pixel.getNeighbors();
-        const otherColors = neighbors.filter(
-          (n) =>
-            n &&
-            n.color !== pixel.color &&
-            n.color !== Colors.White &&
-            n.color !== Colors.Empty
+        const otherColors = neighbors.filter((n): n is Pixel =>
+          n
+            ? n.color !== pixel.color &&
+              n.color !== Colors.White &&
+              n.color !== Colors.Empty
+            : false
         );
         if (otherColors.length !== 2 && otherColors.length !== 0) {
           continue;
         }
+        const sameColor = neighbors.filter((n): n is Pixel =>
+          n ? n.color === pixel.color : false
+        );
         const multiColor = otherColors.length === 2;
-        if (multiColor && pixel.sameColorNeighbors().length !== 0) continue;
-        // same color mosaics
-        const matchingNeighbors: Pixel[] = multiColor
-          ? pixel.otherColorNeighbors()
-          : pixel.sameColorNeighbors();
+        if (multiColor && sameColor.length !== 0) continue;
+
+        const matchingNeighbors: Pixel[] = multiColor ? otherColors : sameColor;
         if (matchingNeighbors.length !== 2) {
           continue;
         }
@@ -86,16 +87,14 @@ export class Board {
         const n2 = matchingNeighbors[1];
         if (!this.match(n1, n2, multiColor)) continue;
         if (!this.match(n2, n1, multiColor)) continue;
-        matchingNeighbors.forEach((n) => {
-          checked.push(n);
-        });
-        this.mosaics.push([this.pixels[i][j], n1, n2]);
+        visited[n1.y][n1.x] = true;
+        visited[n2.y][n2.x] = true;
+        this.mosaics.push([pixel, n1, n2]);
       }
     }
   }
 
   public getLines() {
-    // every 3 rows;
     let lines = 0;
     for (let i = 2; i < this.pixels.length; i += 3) {
       if (this.pixels[i].filter((p) => p.color !== Colors.Empty).length === 0)
@@ -107,27 +106,24 @@ export class Board {
 
   public getScore() {
     let score = 0;
-    this.pixels.forEach((row) => {
-      row.forEach((p) => {
-        if (p.color !== Colors.Empty) score += 3; // 5 points per pixel
-      });
-    });
-    // console.log(resetCode + "Pixels:", score);
+    for (let i = 0; i < this.pixels.length; i++) {
+      for (let j = 0; j < this.pixels[i].length; j++) {
+        const p = this.pixels[i][j];
+        if (p.color !== Colors.Empty) score += 3;
+      }
+    }
     this.getMosiacs();
-    score += this.mosaics.length * 10; // 10 points per mosaic
-    // console.log("Mosaics:", this.mosaics.length * 10);
+    score += this.mosaics.length * 10;
     score += this.getLines() * 10;
-    // console.log("Lines:", this.getLines() * 10);
     return score;
   }
 
   public getMoves() {
     // go from top to bottom for each column
     const moves: Pixel[] = [];
-    for (let i = 0; i < this.pixels[0].length; i++) {
-      for (let j = 0; j < this.pixels.length; j++) {
-        if (i > this.pixels[j].length - 1) continue; // 6 rows
-        const point = this.pixels[j][i];
+    for (let i = 0; i < this.pixels.length; i++) {
+      for (let j = 0; j < this.pixels[i].length; j++) {
+        const point = this.pixels[i][j];
         if (point.color !== Colors.Empty) continue; // skip if not empty
         // check bottomleft and bottomright (support for the pixel so doesn't fall)
         // if side pixel then we only need one of them(br for leftside, bl for rightside)
@@ -170,13 +166,19 @@ export class Board {
   }
 
   public hash(): string {
-    // hash the board state
-    let key = "";
-    this.pixels.forEach((row) => {
-      row.forEach((p) => {
-        key += p.color;
-      });
-    });
-    return key;
+    // Preallocate the key for better performance
+    const keyArray: number[] = new Array(
+      this.pixels.length * this.pixels[0].length
+    );
+
+    let index = 0;
+    for (let i = 0; i < this.pixels.length; i++) {
+      for (let j = 0; j < this.pixels[i].length; j++) {
+        keyArray[index] = this.pixels[i][j].color;
+        index++;
+      }
+    }
+
+    return keyArray.join("");
   }
 }
