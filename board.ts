@@ -33,9 +33,9 @@ export class Board {
       Colors.Empty,
     ].map((c, i) => new Pixel(1, i, this, c));
     this.pixels[2] = [
-      Colors.White,
       Colors.Empty,
       Colors.White,
+      Colors.Empty,
       Colors.White,
       Colors.Empty,
       Colors.Empty,
@@ -52,6 +52,7 @@ export class Board {
   }
 
   public getMosiacs() {
+    this.mosaics = [];
     const checked: Pixel[] = [];
     for (let i = 0; i < this.pixels.length; i++) {
       for (let j = 0; j < this.pixels[i].length; j++) {
@@ -111,11 +112,12 @@ export class Board {
         if (p.color !== Colors.Empty) score += 3; // 5 points per pixel
       });
     });
-    console.log(resetCode + "Pixels:", score);
+    // console.log(resetCode + "Pixels:", score);
+    this.getMosiacs();
     score += this.mosaics.length * 10; // 10 points per mosaic
-    console.log("Mosaics:", this.mosaics.length * 10);
+    // console.log("Mosaics:", this.mosaics.length * 10);
     score += this.getLines() * 10;
-    console.log("Lines:", this.getLines() * 10);
+    // console.log("Lines:", this.getLines() * 10);
     return score;
   }
 
@@ -156,5 +158,14 @@ export class Board {
     if (n1Same.length !== 2) return false;
     if (!n1Same.includes(n2)) return false;
     return true;
+  }
+
+  public copy() {
+    const copy = new Board();
+    copy.pixels = this.pixels.map((row) =>
+      row.map((p) => new Pixel(p.y, p.x, copy, p.color))
+    );
+    copy.getMosiacs();
+    return copy;
   }
 }

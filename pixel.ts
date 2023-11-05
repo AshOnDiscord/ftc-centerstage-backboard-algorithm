@@ -68,7 +68,7 @@ export class Pixel {
 
   toString() {
     if (this.board.getMoves().includes(this))
-      return `${trueColor(0, 0, 0, false)}+${resetCode}`;
+      return `${trueColor(255, 0, 255, false)}+${resetCode}`;
     if (this.color === Colors.Empty) {
       return "-";
     }
