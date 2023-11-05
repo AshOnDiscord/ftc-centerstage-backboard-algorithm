@@ -169,7 +169,7 @@ export class Board {
     return copy;
   }
 
-  public generateKey(): string {
+  public hash(): string {
     // hash the board state
     let key = "";
     this.pixels.forEach((row) => {
