@@ -52,7 +52,10 @@ const getHighestScore = (
   if (depth == 0) {
     // board.printBoard();
     // console.log("Total:", board.getScore());
-    return { score: board.getScore(), moves: history };
+    return {
+      score: board.getScore(),
+      moves: [...history],
+    };
   }
   const moves = board.getMoves();
   let maxScore: Branch = { score: -Infinity, moves: [] };
@@ -86,7 +89,7 @@ const getHighestScore = (
 };
 
 const start = Date.now();
-const top = getHighestScore(board, 4, [], new Map());
+const top = getHighestScore(board, 5, [], new Map());
 console.log("Top", top.score);
 const newBoard = board.copy();
 top.moves.forEach((m) => {
