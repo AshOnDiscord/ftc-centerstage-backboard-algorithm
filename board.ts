@@ -168,4 +168,15 @@ export class Board {
     copy.getMosiacs();
     return copy;
   }
+
+  public generateKey(): string {
+    // hash the board state
+    let key = "";
+    this.pixels.forEach((row) => {
+      row.forEach((p) => {
+        key += p.color;
+      });
+    });
+    return key;
+  }
 }

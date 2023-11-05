@@ -37,8 +37,17 @@ interface PixelData {
 const getHighestScore = (
   board: Board,
   depth: number,
-  history: PixelData[]
+  history: PixelData[],
+  transpositionTable: Map<string, Branch>
 ): Branch => {
+  const boardKey = board.generateKey(); // Generate a unique key for the current board state
+
+  // Check if the board state is already in the transposition table
+  if (transpositionTable.has(boardKey)) {
+    // console.log("Found in transposition table");
+    return transpositionTable.get(boardKey) as Branch;
+  }
+
   if (depth == 0) {
     // board.printBoard();
     // console.log("Total:", board.getScore());
@@ -60,18 +69,24 @@ const getHighestScore = (
         historyCopy.push({ color: h.color, x: h.x, y: h.y })
       );
       historyCopy.push({ color, x: move.x, y: move.y });
-      const b = getHighestScore(copy, depth - 1, historyCopy);
+      const b = getHighestScore(
+        copy,
+        depth - 1,
+        historyCopy,
+        transpositionTable
+      );
       if (b.score > maxScore.score) {
         maxScore = b;
       }
       // console.log(b);
     }
   });
+  transpositionTable.set(boardKey, maxScore);
   return maxScore;
 };
 
 const start = Date.now();
-const top = getHighestScore(board, 3, []);
+const top = getHighestScore(board, 4, [], new Map());
 console.log("Top", top.score);
 const newBoard = board.copy();
 top.moves.forEach((m) => {
