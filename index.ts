@@ -1,5 +1,5 @@
 import { Pixel, Colors } from "./pixel";
-import { pixelTrueColor, resetCode } from "./util";
+import { pixelTrueColor } from "./util";
 import { Board } from "./board";
 
 let board = new Board();
@@ -23,3 +23,5 @@ board.mosaics.forEach((m) => {
 
 console.log();
 console.log("Total:", board.getScore());
+
+console.log(board.getMoves().map((p) => `${p.y},${p.x}`));

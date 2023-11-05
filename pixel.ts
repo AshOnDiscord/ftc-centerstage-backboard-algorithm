@@ -67,6 +67,8 @@ export class Pixel {
   }
 
   toString() {
+    if (this.board.getMoves().includes(this))
+      return `${trueColor(0, 0, 0, false)}+${resetCode}`;
     if (this.color === Colors.Empty) {
       return "-";
     }
@@ -81,12 +83,11 @@ export class Pixel {
         n.color !== Colors.White &&
         n.color !== Colors.Empty
     );
+    6;
     const suffix = `${
-      otherColors.length > 0 && this.color !== Colors.White ? "\x1b[4m" : ""
-    }${matchingNeighbors.length}${resetCode}`;
-    const escape = this.board.mosaics.some((m: Pixel[]) => m.includes(this))
-      ? pixelTrueColor(this.color, true) + trueColor(0, 0, 0, false)
-      : pixelTrueColor(this.color, false);
+      this.board.mosaics.some((e) => e.includes(this)) ? "\x1b[4m" : ""
+    }O${resetCode}`;
+    const escape = pixelTrueColor(this.color, false);
     return `${escape}${suffix}`;
   }
 }

@@ -1,4 +1,4 @@
-import { Pixel, Colors } from "./pixel";
+import { Pixel, Colors, Directions } from "./pixel";
 import { resetCode } from "./util";
 
 export class Board {
@@ -56,7 +56,7 @@ export class Board {
     for (let i = 0; i < this.pixels.length; i++) {
       for (let j = 0; j < this.pixels[i].length; j++) {
         const pixel = this.pixels[i][j];
-        if (checked.some((c) => c === pixel)) continue;
+        if (checked.includes(pixel)) continue;
         checked.push(pixel);
         if (pixel.color === Colors.Empty || pixel.color === Colors.White) {
           continue;
@@ -119,6 +119,28 @@ export class Board {
     return score;
   }
 
+  public getMoves() {
+    // go from top to bottom for each column
+    const moves: Pixel[] = [];
+    for (let i = 0; i < this.pixels[0].length; i++) {
+      for (let j = 0; j < this.pixels.length; j++) {
+        if (i > this.pixels[j].length - 1) continue; // 6 rows
+        const point = this.pixels[j][i];
+        if (point.color !== Colors.Empty) continue; // skip if not empty
+        // check bottomleft and bottomright (support for the pixel so doesn't fall)
+        // if side pixel then we only need one of them(br for leftside, bl for rightside)
+        const bl = point.getNeighbor(Directions.BottomLeft);
+        const br = point.getNeighbor(Directions.BottomRight);
+        if ((!bl && br?.color === Colors.Empty) || bl?.color === Colors.Empty)
+          continue;
+        if ((!br && bl?.color === Colors.Empty) || br?.color === Colors.Empty)
+          continue;
+        moves.push(point);
+      }
+    }
+    return moves;
+  }
+
   private match(n1: Pixel, n2: Pixel, multiColor: boolean): boolean {
     // if multiColor we just swap sameColor and otherColor
     const n1Diff = multiColor
@@ -132,7 +154,7 @@ export class Board {
       ? n1.otherColorNeighbors()
       : n1.sameColorNeighbors();
     if (n1Same.length !== 2) return false;
-    if (!n1Same.some((n) => n === n2)) return false;
+    if (!n1Same.includes(n2)) return false;
     return true;
   }
 }
