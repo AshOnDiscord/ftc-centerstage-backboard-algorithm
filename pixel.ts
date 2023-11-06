@@ -1,6 +1,12 @@
 import { Board } from "./board";
 import { pixelTrueColor, trueColor, resetCode } from "./util";
 
+export interface PixelData {
+  color: number;
+  x: number;
+  y: number;
+}
+
 export class Pixel {
   private offsets: number[][];
 

@@ -1,4 +1,4 @@
-import { Pixel, Colors, Directions } from "./pixel";
+import { Pixel, PixelData, Colors, Directions } from "./pixel";
 import { resetCode } from "./util";
 
 export class Board {
@@ -15,31 +15,8 @@ export class Board {
         this.pixels[i].push(new Pixel(i, j, this));
       }
     }
-    this.pixels[0] = [
-      Colors.Yellow,
-      Colors.White,
-      Colors.White,
-      Colors.Yellow,
-      Colors.Yellow,
-      Colors.Empty,
-    ].map((c, i) => new Pixel(0, i, this, c));
-    this.pixels[1] = [
-      Colors.Purple,
-      Colors.Green,
-      Colors.White,
-      Colors.White,
-      Colors.Yellow,
-      Colors.Empty,
-      Colors.Empty,
-    ].map((c, i) => new Pixel(1, i, this, c));
-    this.pixels[2] = [
-      Colors.Empty,
-      Colors.White,
-      Colors.Empty,
-      Colors.White,
-      Colors.Empty,
-      Colors.Empty,
-    ].map((c, i) => new Pixel(2, i, this, c));
+    this.pixels[0][2] = new Pixel(0, 2, this, Colors.Green);
+    this.pixels[0][3] = new Pixel(0, 3, this, Colors.Yellow);
     return this;
   };
 
@@ -51,8 +28,9 @@ export class Board {
     console.log(str);
   }
 
-  public getMosiacs() {
+  public getMosiacs(): PixelData[] {
     this.mosaics = [];
+    let correctColor: PixelData[] = [];
     const visited: boolean[][] = this.pixels.map((row) => row.map(() => false));
     for (let i = 0; i < this.pixels.length; i++) {
       for (let j = 0; j < this.pixels[i].length; j++) {
@@ -70,28 +48,52 @@ export class Board {
               n.color !== Colors.Empty
             : false
         );
-        if (otherColors.length !== 2 && otherColors.length !== 0) {
-          continue;
-        }
         const sameColor = neighbors.filter((n): n is Pixel =>
           n ? n.color === pixel.color : false
         );
-        const multiColor = otherColors.length === 2;
-        if (multiColor && sameColor.length !== 0) continue;
+        if (otherColors.length === 0 || otherColors.length === 2) {
+          const multiColor = otherColors.length === 2;
+          if (multiColor && sameColor.length !== 0) continue;
 
-        const matchingNeighbors: Pixel[] = multiColor ? otherColors : sameColor;
-        if (matchingNeighbors.length !== 2) {
-          continue;
+          const matchingNeighbors: Pixel[] = multiColor
+            ? otherColors
+            : sameColor;
+          if (matchingNeighbors.length !== 2) {
+            continue;
+          }
+          const n1 = matchingNeighbors[0];
+          const n2 = matchingNeighbors[1];
+          if (!this.match(n1, n2, multiColor)) continue;
+          if (!this.match(n2, n1, multiColor)) continue;
+          visited[n1.y][n1.x] = true;
+          visited[n2.y][n2.x] = true;
+          this.mosaics.push([pixel, n1, n2]);
+        } else if (otherColors.length === 1 && sameColor.length === 1) {
+          // since our algo uses yellow as a color agnostic color, if the other pixel is yellow, then we can still generate a possible mosaic
+          const otherColor = otherColors[0];
+          // make sure the second color is our yellow same neighbor
+          const ocNeighbors = otherColor.getNeighbors();
+          if (!ocNeighbors.some((n): n is Pixel => n === sameColor[0]))
+            continue;
+          correctColor.push({
+            x: pixel.x,
+            y: pixel.y,
+            color: Colors.Green ? Colors.Purple : Colors.Green,
+          });
+          this.mosaics.push([
+            new Pixel(
+              pixel.x,
+              pixel.y,
+              pixel.board,
+              correctColor[correctColor.length - 1].color
+            ),
+            otherColor,
+            sameColor[0],
+          ]);
         }
-        const n1 = matchingNeighbors[0];
-        const n2 = matchingNeighbors[1];
-        if (!this.match(n1, n2, multiColor)) continue;
-        if (!this.match(n2, n1, multiColor)) continue;
-        visited[n1.y][n1.x] = true;
-        visited[n2.y][n2.x] = true;
-        this.mosaics.push([pixel, n1, n2]);
       }
     }
+    return correctColor;
   }
 
   public getLines() {
@@ -112,10 +114,10 @@ export class Board {
         if (p.color !== Colors.Empty) score += 3;
       }
     }
-    this.getMosiacs();
+    const color = this.getMosiacs();
     score += this.mosaics.length * 10;
     score += this.getLines() * 10;
-    return score;
+    return { score, color };
   }
 
   public getMoves() {
