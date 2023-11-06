@@ -60,11 +60,12 @@ const start = Date.now();
 const top = getHighestScore(board, 4, [], new Map());
 const end = Date.now();
 const newBoard = board.copy();
-newBoard.printBoard();
-console.log("Top", top.score);
-console.log("Time:", end - start);
 top.moves.forEach((m) => {
   6;
   console.log(`${m.y},${m.x} ${m.color}`);
   newBoard.pixels[m.y][m.x].color = m.color;
 });
+
+newBoard.printBoard();
+console.log("Top", top.score);
+console.log("Time:", end - start);
