@@ -45,15 +45,29 @@ const getHighestScore = (
   const moves = board.getMoves();
   let maxScore: Branch = { score: -Infinity, moves: [] };
   moves.forEach((move) => {
-    for (let color = Colors.White; color <= Colors.Yellow; color++) {
+    const colorSums: number[] = [0, 0, 0, 0, 0];
+    for (let y = 0; y < board.pixels.length; y++) {
+      for (let x = 0; x < board.pixels[y].length; x++) {
+        colorSums[board.pixels[y][x].color]++;
+      }
+    }
+    [Colors.White, Colors.Yellow, Colors.Green, Colors.Purple].map(
+      (e) => colorSums[e] < board.limits[e]
+    );
+    for (let color = Colors.White; color < Colors.Purple; color++) {
+      if (colorSums[color] >= board.limits[color]) continue;
       board.pixels[move.y][move.x].color = color;
       history.push({ color, x: move.x, y: move.y });
       const b = getHighestScore(board, depth - 1, history, transpositionTable);
-      board.pixels[move.y][move.x].color = Colors.Empty;
       history.pop();
       if (b.score > maxScore.score) {
         maxScore = b;
       }
+      if (color == Colors.Yellow) {
+        // board.printBoard();
+        break;
+      }
+      board.pixels[move.y][move.x].color = Colors.Empty;
     }
   });
   transpositionTable.set(boardKey, maxScore);
@@ -61,7 +75,7 @@ const getHighestScore = (
 };
 
 const start = Date.now();
-const top = getHighestScore(board, 8, [], new Map());
+const top = getHighestScore(board, 6, [], new Map());
 const end = Date.now();
 const newBoard = board.copy();
 top.moves.forEach((m) => {

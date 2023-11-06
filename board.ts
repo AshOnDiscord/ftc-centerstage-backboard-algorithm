@@ -2,6 +2,8 @@ import { Pixel, PixelData, Colors, Directions } from "./pixel";
 import { resetCode } from "./util";
 
 export class Board {
+  public limits: number[] = [Infinity, Infinity, 2, 10, 10];
+
   constructor(public pixels: Pixel[][] = [], public mosaics: Pixel[][] = []) {
     this.setupBoard();
   }
